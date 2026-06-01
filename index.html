@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Glacier Defender</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="game-container">
+    <div class="header">
+        <div class="lvl">STAGE <span id="level-num">1</span></div>
+        <div class="hp-bar"><div id="hp-fill" class="hp-fill"></div></div>
+    </div>
+    
+    <div class="stage-progress-container">
+        <div id="stage-bar" class="stage-bar"></div>
+    </div>
+
+    <div id="viewport" class="viewport">
+        <div class="stats">
+            SCORE: <span id="score">0</span><br>
+            ALBEDO: <span id="albedo">85</span>%
+        </div>
+        
+        <div id="toast" class="toast"></div>
+        <div id="shield" class="shield">SHIELD</div>
+        <div id="glacier" class="glacier"></div>
+
+        <div id="start-screen" class="overlay">
+            <div class="content-box">
+                <h1 class="neon-text">GLACIER DEFENDER</h1>
+                <div class="info-text">
+                    <strong>[Mission]</strong> Protect the glacier from melting!<br>
+                    Black Carbon is falling and accelerating global warming. Block the soot with your shield!
+                </div>
+                <input type="text" id="user-name" placeholder="Enter your name" maxlength="10">
+                <button onclick="startGame()">START MISSION</button>
+            </div>
+        </div>
+
+        <div id="result-screen" class="overlay" style="display:none;">
+            <div class="content-box">
+                <h2 id="result-title" class="neon-text">MISSION OVER</h2>
+                <p id="result-desc"></p>
+                <div class="final-val" id="final-score">0</div>
+                <div class="ranking-box">
+                    <small>TOP 5 DEFENDERS</small>
+                    <div id="rank-list"></div>
+                </div>
+                <button onclick="location.reload()">TRY AGAIN</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
