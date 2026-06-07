@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Glacier Defender</title>
+    <title>Global Glacier Defender</title>
     <link rel="stylesheet" href="style.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
 <body>
 
@@ -43,13 +46,15 @@
         <div id="result-screen" class="overlay" style="display:none;">
             <div class="content-box">
                 <h2 id="result-title" class="neon-text">MISSION OVER</h2>
-                <p id="result-desc"></p>
                 <div class="final-val" id="final-score">0</div>
+                <p id="result-desc" style="font-size:13px; color:#abb2bf; margin-bottom:15px;"></p>
+                
                 <div class="ranking-box">
-                    <small>TOP 5 DEFENDERS</small>
-                    <div id="rank-list"></div>
+                    <small>GLOBAL TOP 5 DEFENDERS</small>
+                    <div id="rank-list">Loading ranks...</div>
                 </div>
-                <button onclick="location.reload()">TRY AGAIN</button>
+                
+                <button onclick="location.reload()">RETRY</button>
             </div>
         </div>
     </div>
