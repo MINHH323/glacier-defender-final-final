@@ -1,8 +1,8 @@
-// 1. Firebase 설정 (보내주신 값을 바탕으로 완벽 세팅 완료!)
+// 1. Firebase 설정
 const firebaseConfig = {
     apiKey: "AIzaSyCLTaAPebMQOCpybHUlPvPlBibe4O1MwtE",
     authDomain: "glacier-rank-final.firebaseapp.com",
-    databaseURL: "https://glacier-rank-final-default-rtdb.firebaseio.com", // 주소 자동 매칭!
+    databaseURL: "https://glacier-rank-final-default-rtdb.firebaseio.com",
     projectId: "glacier-rank-final",
     storageBucket: "glacier-rank-final.firebasestorage.app",
     messagingSenderId: "414490219811",
@@ -160,23 +160,46 @@ function endGame() {
         desc.innerText = "The glacier is melting. Try again?";
     }
     
-    // 점수 전송 및 글로벌 랭킹 리스트업 함수 호출
     uploadAndShowRank(game.name, game.score);
 }
 
+// [수정된 핵심 로직] 중복 이름을 체크하고 점수 업데이트하기
 function uploadAndShowRank(name, score) {
-    // 1. 공용 데이터베이스 서버에 내 데이터 추가하기
-    db.ref('ggc_global_scores').push({
-        n: name,
-        s: score,
-        date: Date.now()
-    });
+    const scoreRef = db.ref('ggc_global_scores');
 
-    // 2. 공용 데이터베이스 서버에서 점수 높은 순으로 5개 긁어오기
+    // 1. 먼저 서버에서 이 이름(n)을 가진 데이터가 있는지 검색합니다.
+    scoreRef.orderByChild('n').equalTo(name).once('value', (snapshot) => {
+        if (snapshot.exists()) {
+            // 이름이 이미 있다면 기존 데이터를 확인
+            snapshot.forEach((childSnapshot) => {
+                const existingData = childSnapshot.val();
+                // 새로 낸 점수가 기존 최고 점수보다 높을 때만 업데이트!
+                if (score > existingData.s) {
+                    childSnapshot.ref.update({
+                        s: score,
+                        date: Date.now()
+                    });
+                }
+            });
+        } else {
+            // 처음 등록하는 이름이라면 새로 추가!
+            scoreRef.push({
+                n: name,
+                s: score,
+                date: Date.now()
+            });
+        }
+
+        // 2. 저장이 끝나면 서버에서 실시간 TOP 5 가져와서 화면에 그리기
+        showTop5();
+    });
+}
+
+function showTop5() {
     db.ref('ggc_global_scores').orderByChild('s').limitToLast(5).once('value', (snapshot) => {
         let rks = [];
         snapshot.forEach(child => { rks.push(child.val()); });
-        rks.reverse(); // 점수 높은 순 정렬
+        rks.reverse(); // 내림차순 정렬
 
         const list = document.getElementById('rank-list');
         list.innerHTML = rks.map((r, i) => `
