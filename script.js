@@ -1,3 +1,19 @@
+// 1. Firebase 설정 (보내주신 값을 바탕으로 완벽 세팅 완료!)
+const firebaseConfig = {
+    apiKey: "AIzaSyCLTaAPebMQOCpybHUlPvPlBibe4O1MwtE",
+    authDomain: "glacier-rank-final.firebaseapp.com",
+    databaseURL: "https://glacier-rank-final-default-rtdb.firebaseio.com", // 주소 자동 매칭!
+    projectId: "glacier-rank-final",
+    storageBucket: "glacier-rank-final.firebasestorage.app",
+    messagingSenderId: "414490219811",
+    appId: "1:414490219811:web:dc7dd29a83cf4be665a896"
+};
+
+// 파이어베이스 데이터베이스 시작
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// 게임 엘리먼트들
 const vp = document.getElementById('viewport');
 const sh = document.getElementById('shield');
 const hf = document.getElementById('hp-fill');
@@ -12,7 +28,7 @@ const ni = document.getElementById('user-name');
 let game = { score: 0, hp: 100, level: 1, active: false, speed: 4, rate: 800, name: "" };
 let spawnTimer;
 
-// [기억 기능] 페이지 로드 시 저장된 닉네임 불러오기
+// 이름 기억 기능
 window.addEventListener('load', () => {
     const savedName = localStorage.getItem('last_defender_name');
     if (savedName) ni.value = savedName;
@@ -21,8 +37,6 @@ window.addEventListener('load', () => {
 function startGame() {
     const nameInput = ni.value.trim();
     if (!nameInput) { alert("Please enter your name!"); return; }
-    
-    // [기억 기능] 닉네임 로컬 스토리지에 저장
     localStorage.setItem('last_defender_name', nameInput);
     
     game.name = nameInput;
@@ -38,7 +52,6 @@ const move = (e) => {
     const rect = vp.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const x = clientX - rect.left;
-    // 방패가 화면 밖으로 나가지 않게 조절
     sh.style.left = Math.max(50, Math.min(rect.width - 50, x)) + 'px';
 };
 vp.addEventListener('mousemove', move);
@@ -60,7 +73,6 @@ function spawn() {
     const p = document.createElement('div');
     p.className = 'drop';
     
-    // [위치 수정] 양 끝 20px 안쪽에서만 생성되게 하여 튕김 방지
     const margin = 20;
     p.style.left = (Math.random() * (vp.clientWidth - (margin * 2)) + margin) + 'px';
     p.style.top = '0px';
@@ -74,11 +86,10 @@ function spawn() {
         if (!game.active) { clearInterval(moveInterval); p.remove(); return; }
         
         y += game.speed;
-        
-        // [벽 충돌 로직] 블랙카본이 벽에 닿으면 튕겨나오게 함
         currentX += drift;
+        
         if (currentX <= 5 || currentX >= vp.clientWidth - 15) {
-            drift *= -1; // 방향 반전
+            drift *= -1; 
         }
 
         p.style.top = y + 'px';
@@ -148,21 +159,31 @@ function endGame() {
         title.innerText = "MISSION OVER";
         desc.innerText = "The glacier is melting. Try again?";
     }
-    saveRank();
-    showRanks();
+    
+    // 점수 전송 및 글로벌 랭킹 리스트업 함수 호출
+    uploadAndShowRank(game.name, game.score);
 }
 
-function saveRank() {
-    let rks = JSON.parse(localStorage.getItem('ggc_final_rk_en') || '[]');
-    rks.push({n: game.name, s: game.score});
-    rks.sort((a,b) => b.s - a.s);
-    localStorage.setItem('ggc_final_rk_en', JSON.stringify(rks.slice(0, 5)));
-}
+function uploadAndShowRank(name, score) {
+    // 1. 공용 데이터베이스 서버에 내 데이터 추가하기
+    db.ref('ggc_global_scores').push({
+        n: name,
+        s: score,
+        date: Date.now()
+    });
 
-function showRanks() {
-    const rks = JSON.parse(localStorage.getItem('ggc_final_rk_en') || '[]');
-    const list = document.getElementById('rank-list');
-    list.innerHTML = rks.map((r, i) => `
-        <div class="rk-item"><span>${i+1}. ${r.n}</span><b style="color:#00ffcc">${r.s}</b></div>
-    `).join('') || "No records yet.";
+    // 2. 공용 데이터베이스 서버에서 점수 높은 순으로 5개 긁어오기
+    db.ref('ggc_global_scores').orderByChild('s').limitToLast(5).once('value', (snapshot) => {
+        let rks = [];
+        snapshot.forEach(child => { rks.push(child.val()); });
+        rks.reverse(); // 점수 높은 순 정렬
+
+        const list = document.getElementById('rank-list');
+        list.innerHTML = rks.map((r, i) => `
+            <div class="rk-item">
+                <span>${i+1}. ${r.n}</span>
+                <b>${r.s}</b>
+            </div>
+        `).join('') || "<div style='text-align:center; color:#555;'>No records yet</div>";
+    });
 }
